@@ -19,7 +19,19 @@ Proje, kurumsal düzeyde bir destek ve talep yönetim sisteminin (ITSM) ihtiyaç
     - TicketWorkLogs: Harcanan zamanın ve çalışma loglarının takibi.
     - TicketLinks: Biletler arasındaki ilişkiler (örn. bir arızanın başka bir talebi engellemesi - BLOCKS, RELATES).
 
-## 🎯 Geliştirmeci İçin Eklenenler ve Yenilikler
+## 🚀 Gelişmiş Veritabanı Nesneleri ve Programatik Mimari
+Projenin altyapısı; sadece tablo tutan bir yapıdan çıkarılıp, kurumsal standartlara uygun tam donanımlı bir DBA ve Backend laboratuvarına dönüştürülmüştür:
+-   Views (Görünümler): Karmaşık JOIN maliyetlerini ortadan kaldıran, arayüz ve raporlama katmanı için optimize edilmiş bilet detayları, personel iş yükleri ve SLA özet görünümleri (vw_TicketDetails, vw_UserWorkloads, vw_SlaStatusSummary).
+
+-   Functions (Fonksiyonlar): İş günü/saat bazlı bitiş tarihi hesaplayan (fn_CalculateBusinessDueDate), isim formatlayan, bilet yaşını hesaplayan ve grup üyelik yetkilerini kontrol eden deterministik fonksiyonlar.
+
+-   Stored Procedures (Saklı Yordamlar): BEGIN TRY...CATCH ve TRANSACTION blokları ile veri bütünlüğünü garanti eden, güvenli bilet oluşturma, atama ve çözümleme yordamları (sp_CreateTicket, sp_AssignTicket, sp_ResolveTicket).
+
+-   Triggers (Tetikleyiciler): Bilet güncellemelerini ve statü değişimlerini otomatik olarak audit eden tetikleyici mekanizmalar (trg_TicketAudit).
+
+-   Jobs (SQL Agent Görevleri): Veritabanı performansını korumak için periyodik indeks bakım (Index Maintenance) ve saatlik SLA ihlal tarama görevleri (SLA Breach Check).
+
+## 🛠️ Kurulum ve Çalıştırma Adımları
 Projenin altyapısı ve geliştirme süreçleri, profesyonel bir DBA ve backend geliştiricinin ihtiyaç duyacağı şekilde zenginleştirilmiştir:
 
 > [!IMPORTANT]
@@ -37,12 +49,12 @@ Projenin altyapısı ve geliştirme süreçleri, profesyonel bir DBA ve backend 
 
 ## 🎯 Geliştirmeci İçin Eklenenler ve Yenilikler
 Projeyi kendi yerel ortamınızda Docker kullanarak adım adım ayağa kaldırmak için aşağıdaki adımları izleyebilirsiniz:
-- Repository'yi Klonlayın
+1. Repository'yi Klonlayın
 ```bash
 git clone https://github.com/ufukgulec/sql-server-labs.git
 cd sql-server-labs
 ```
-- Docker Container'ı Başlatın
+2. Docker Container'ı Başlatın
 Docker Compose kullanarak SQL Server 2022 ortamını ark planda build edin ve ayağa kaldırın:
 ```bash
 cd docker
@@ -53,7 +65,7 @@ Container'ın durumunu ve loglarını kontrol etmek için:
 docker compose ps
 docker logs itsm_sql_server
 ```
-- Veritabanı Şemasını Oluşturun
+3. Veritabanı Şemasını Oluşturun
 SQL Server ayağa kalktıktan sonra, veritabanı şema ve tablo oluşturma script'ini çalıştırın:
 ```bash
 docker exec -i itsm_sql_server \
@@ -64,8 +76,8 @@ docker exec -i itsm_sql_server \
 -C \
 < ../scripts/01_schema.sql
 ```
-- Test (Dummy) Verilerini Yükleyin
-Sistemi test etmek ve hazır verilerle çalışmak için master data script'ini execute edin:
+4. Test (Dummy) Verilerini Yükleyin
+-   Sistemi test etmek ve hazır verilerle çalışmak için master data script'ini execute edin:
 ```bash
 docker exec -i itsm_sql_server \
 /opt/mssql-tools18/bin/sqlcmd \
@@ -86,3 +98,6 @@ docker exec -i itsm_sql_server \
 < ../scripts/03_dummy_data.sql
 ```
 Bu adımların ardından veritabanınız tüm ilişkisel tabloları ve örnek verileriyle birlikte kullanıma hazır hale gelecektir.
+
+5. Programatik Nesneleri (Views, Functions, Procedures, Triggers) Entegre Edin
+Gelişmiş modülleri sırasıyla veritabanına tanımlayabilirsiniz.
