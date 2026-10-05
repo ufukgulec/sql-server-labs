@@ -6,7 +6,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     
     # Docker daemon üzerinde görünecek benzersiz container adı
-    container_name: itsm_sql_server
+    container_name: dms_sql_server
     
     # Sunucu veya Docker servisi yeniden başlatıldığında container'ın otomatik ayağa kalkmasını sağlar
     restart: unless-stopped
@@ -22,16 +22,15 @@ services:
       - MSSQL_PID=Developer
       
     ports:
-      # Host makinenin 1433 portunu container içerisindeki 1433 portuna yönlendirir
-      # NOT: DMS projesi ile aynı makinede aynı anda kaldıracaksanız çakışmaması için dış portu "1434:1433" yapabilirsiniz.
+      # Host makinenin 1433 portunu container içerisindeki 1433 portuna yönlendirir (Dışarıdan erişim için)
       - "1433:1433"
       
     volumes:
-      # Veri Kalıcılığı (Data Persistence): DMS ve diğer projelerle veri çakışmasını önlemek için itsm_mssql_data olarak izole edildi
-      - itsm_mssql_data:/var/opt/mssql
+      # Veri Kalıcılığı (Data Persistence): Diğer projelerle çakışmaması için dms_mssql_data olarak izole edildi
+      - dms_mssql_data:/var/opt/mssql
       
-      # Proje Mimarisi Notu: itsm/docker/ klasöründen çalıştırıldığı için, bir üst dizindeki scripts/ 
-      # klasörünü container içine salt okunur (ro) olarak bağlar ve ITSM SQL scriptlerine erişim sağlar.
+      # Proje Mimarisi Notu: dms/docker/ klasöründen çalıştırıldığı için, bir üst dizindeki scripts/ 
+      # klasörünü container içine salt okunur (ro) olarak bağlar ve DMS SQL scriptlerine erişim sağlar.
       - ../scripts:/usr/work/scripts:ro
       
     # Container'ın sadece "çalışıyor" olmasını değil, aynı zamanda veritabanı 
@@ -44,6 +43,6 @@ services:
       start_period: 15s # İlk açılışta veritabanı servisinin kendine gelmesi için tanınan süre
 
 volumes:
-  # ITSM projesine özel Docker yönetimli kalıcı veri alanı (Named Volume) tanımı
-  itsm_mssql_data:
+  # DMS projesine özel Docker yönetimli kalıcı veri alanı (Named Volume) tanımı
+  dms_mssql_data:
     driver: local
