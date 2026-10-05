@@ -1,4 +1,4 @@
-# 🏗️ SQL Server ITSM Laboratuvar Projesi ve Mimarisi
+# 🏗️ SQL Server ITSM Projesi ve Mimarisi
 
 Bu repository, gerçek dünya senaryolarına dayalı IT Service Management (ITSM) domainini ele alan, uçtan uca bir Microsoft SQL Server laboratuvar ve pratik alanıdır. Proje; veritabanı tasarımı, ilişkisel modelleme, performans optimizasyonu ve veritabanı yönetim sistemleri (DBA) pratiklerini uygulamalı olarak geliştirmek amacıyla tasarlanmıştır.
 
