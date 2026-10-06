@@ -1,0 +1,39 @@
+-- =========================================================================
+-- 4. INLINE TABLE-VALUED FUNCTION: Alt Klasör ve Doküman Arama (dms.fn_GetChildDocuments)
+-- =========================================================================
+/* =========================================================================
+   Fonksiyon Adı : dms.fn_GetChildDocuments
+   Açıklama      : Verilen bir üst klasörün altındaki tüm alt klasörlerde yer alan
+                   aktif dokümanları HIERARCHYID yetenekleri (IsDescendantOf) ile
+                   rekürsif tarayarak getirir.
+   Yazar         : Database Architecture Team
+   ========================================================================= */
+CREATE OR ALTER FUNCTION dms.fn_GetChildDocuments
+(
+    @RootFolderId BIGINT
+)
+RETURNS TABLE
+WITH SCHEMABINDING
+AS
+RETURN
+(
+    SELECT 
+        d.DocumentId,
+        d.DocumentNumber,
+        d.Title,
+        d.FolderId,
+        f.FolderName,
+        f.Node.ToString() AS FolderNodePath,
+        d.CurrentVersionId,
+        d.OwnerId,
+        d.IsLocked,
+        d.CreatedAt
+    FROM dms.Folders root
+    INNER JOIN dms.Folders f ON f.Node.IsDescendantOf(root.Node) = 1
+    INNER JOIN dms.Documents d ON f.FolderId = d.FolderId
+    WHERE root.FolderId = @RootFolderId
+      AND d.IsDeleted = 0
+      AND f.IsActive = 1
+);
+GO
+
