@@ -1,48 +1,174 @@
-# 🏗️ SQL Server Kaizen Yönetim Projesi ve Mimarisi
+# 🏗️ SQL Server Kaizen Management System
 
-Bu repository, kurumsal süreçlerde sürekli iyileştirme (**Continuous Improvement**) ve yalın üretim felsefesini dijitalleştiren bir **Kaizen Yönetim Sistemi (Kaizen Management System)** domainini ele alan, uçtan uca bir Microsoft SQL Server laboratuvarı ve pratik alanıdır.
+Kurumsal süreçlerde sürekli iyileştirme (*Continuous Improvement*) ve yalın üretim felsefesini dijitalleştiren **Kaizen Yönetim Sistemi** için geliştirilmiş Microsoft SQL Server laboratuvarı.
 
-Proje; veritabanı tasarımı, ilişkisel modelleme, süreç akış takibi, maliyet ve kazanç ölçümlemesi, performans optimizasyonu ve veritabanı yönetimi (**DBA**) pratiklerini uygulamalı olarak geliştirmek amacıyla tasarlanmıştır.
+Bu proje; ilişkisel veritabanı tasarımı, T-SQL geliştirme, süreç takibi, maliyet ve kazanç analizi, performans optimizasyonu ve DBA uygulamalarını gerçekçi bir iş senaryosu üzerinden incelemek amacıyla hazırlanmıştır.
 
-## 🧩 Veritabanı İlişkileri ve Mimari Yapı
+## 📌 Proje Hakkında
 
-Proje, kurumsal düzeyde bir öneri ve iyileştirme takip sisteminin ihtiyaç duyduğu modüler şema yapısına (`org`, `kzn`, `audit`) sahiptir.
+Kaizen Yönetim Sistemi; çalışanların iyileştirme önerilerini oluşturmasını, ekiplerin projeler üzerinde birlikte çalışmasını, aksiyon planlarının takip edilmesini ve elde edilen sonuçların ölçülmesini sağlayan bir sistemin veritabanı altyapısını modeller.
 
-### 1. Organizasyon ve Kimlik Yönetimi (`org` Şeması)
+Proje kapsamında aşağıdaki konular ele alınır:
 
-- **`Departments`:** Fabrika veya şirket departmanlarını ve maliyet merkezlerini (*Cost Center*) tanımlar.
-- **`Employees`:** Sistemi kullanan çalışanları, departman ilişkilerini ve aktiflik durumlarını yönetir. Aktif çalışan sorguları için optimize edilmiş filtered index'ler içerir.
+- İlişkisel veritabanı tasarımı ve normalizasyon
+- Primary key, foreign key ve veri bütünlüğü kısıtları
+- Stored procedure, view, function ve trigger kullanımı
+- Transaction yönetimi ve hata yakalama
+- `ROWVERSION` ile optimistic concurrency
+- Filtered index ve sorgu optimizasyonu
+- Audit log ve süreç geçmişi
+- Docker ile SQL Server ortamının kurulması
 
-### 2. Kaizen ve İyileştirme Yönetimi (`kzn` Şeması)
+## 🧩 Veritabanı Mimarisi
 
-- **`Kaizens`:** Kaizen önerilerinin ve projelerinin temel verilerini tutar. İyimser eşzamanlılık (*Optimistic Concurrency*) için `ROWVERSION`; durum ve öncelik takibi için `CHECK` kısıtları içerir.
-- **`KaizenTeamMembers`:** Bir Kaizen projesinde görev alan çalışanlar arasındaki çoka-çok ilişkiyi ve ekip rollerini (`LEADER`, `MEMBER`, `SPONSOR`) yönetir.
-- **`KaizenAnalyses`:** Problemlerin kök neden analizlerini ve kullanılan yöntemleri (`5WHY`, `FISHBONE`, `BRAIN_STORMING`) birebir ilişkiyle saklar.
-- **`KaizenActionPlans`:** İyileştirme faaliyetlerini, sorumluları ve vade tarihlerini takip eder. Tamamlanmamış aksiyonlar için filtered index desteği sunar.
-- **`KaizenResults`:** Kaizen sonucunda elde edilen finansal kazancı (`FinancialGain`), zaman tasarrufunu (`TimeSavedHours`) ve iş güvenliği iyileştirme skorlarını ölçümler.
+Veritabanı, sorumlulukları birbirinden ayırmak amacıyla üç şema üzerine kuruludur:
 
-### 3. Tarihçe ve Denetim (`audit` Şeması)
-
-- **`KaizenLogs`:** Kaizen kayıtları üzerinde gerçekleşen süreç değişikliklerini ve onay adımlarını; işlemi gerçekleştiren çalışan ve IP adresi bilgileriyle kayıt altına alır.
-
-## 🚀 Gelişmiş Veritabanı Nesneleri ve Programatik Mimari
-
-Proje, kurumsal standartları ve DBA uygulamalarını incelemek üzere aşağıdaki SQL Server nesnelerini ve mekanizmalarını kapsayacak şekilde tasarlanmıştır.
-
-| Nesne / Mekanizma | Açıklama |
+| Şema | Sorumluluk |
 |---|---|
-| **Views** | Departman bazlı Kaizen özetleri, aktif projeler ve kazanım raporları sunar. |
-| **Functions** | Çalışan performans metriklerini ve Kaizen tamamlama sürelerini hesaplayan yardımcı fonksiyonlar sağlar. |
-| **Stored Procedures** | `BEGIN TRY...CATCH` ve `TRANSACTION` bloklarıyla güvenli Kaizen oluşturma, durum güncelleme ve sonuç doğrulama işlemlerini yönetir. |
-| **Triggers** | Kaizen durum değişikliklerini ve güncellemelerini `audit.KaizenLogs` tablosuna aktarır. |
-| **SQL Server Agent Jobs** | Vadesi geçmiş aksiyon planlarını denetleme ve periyodik indeks bakımı gibi arka plan görevlerini ele alır. |
+| `org` | Organizasyon yapısı ve çalışan yönetimi |
+| `kzn` | Kaizen önerileri, analizler, ekipler, aksiyonlar ve sonuçlar |
+| `audit` | Süreç değişiklikleri ve denetim kayıtları |
 
-## 🛠️ Proje Yapısı
+### 1. Organizasyon Yönetimi — `org`
 
-Proje yapılandırması Docker, SQL scriptleri ve veritabanı kurulum adımlarını birbirinden ayıracak şekilde modüler olarak düzenlenmiştir.
+**Departments**
+
+Departmanları, organizasyonel birimleri ve maliyet merkezlerini tanımlar.
+
+**Employees**
+
+Çalışan bilgilerini, departman ilişkilerini ve aktiflik durumlarını yönetir.
+
+Aktif çalışanların sorgulanmasını desteklemek için uygun filtered index stratejileri kullanılabilir.
+
+### 2. Kaizen Yönetimi — `kzn`
+
+**Kaizens**
+
+Kaizen önerilerinin ve iyileştirme projelerinin ana kayıtlarını tutar.
+
+Öne çıkan özellikler:
+
+- Durum ve öncelik yönetimi
+- `CHECK` kısıtlarıyla veri doğrulama
+- `ROWVERSION` ile eş zamanlı güncelleme kontrolü
+
+**KaizenTeamMembers**
+
+Kaizen projelerinde görev alan çalışanları ve ekip rollerini yönetir.
+
+Desteklenen örnek roller:
+
+- `LEADER`
+- `MEMBER`
+- `SPONSOR`
+
+**KaizenAnalyses**
+
+Kök neden analizlerini ve kullanılan analiz yöntemlerini saklar.
+
+Örnek yöntemler:
+
+- `5WHY`
+- `FISHBONE`
+- `BRAIN_STORMING`
+
+**KaizenActionPlans**
+
+İyileştirme faaliyetlerini, sorumluları ve hedef tamamlanma tarihlerini takip eder.
+
+Tamamlanmamış aksiyonların sorgulanması için filtered index yaklaşımı kullanılabilir.
+
+**KaizenResults**
+
+Kaizen projelerinin ölçülebilir sonuçlarını kaydeder.
+
+Örnek metrikler:
+
+- `FinancialGain`: Finansal kazanç
+- `TimeSavedHours`: Kazanılan zaman
+- İş güvenliği iyileştirme ölçümleri
+
+### 3. Denetim ve Geçmiş — `audit`
+
+**KaizenLogs**
+
+Kaizen kayıtları üzerindeki süreç değişikliklerini ve ilgili denetim bilgilerini saklar.
+
+Kayıt kapsamı, uygulanan tasarıma bağlı olarak şu bilgileri içerebilir:
+
+- İlgili Kaizen kaydı
+- İşlemi gerçekleştiren çalışan
+- İşlem türü ve değişiklik bilgileri
+- İşlem zamanı
+- İstemci IP adresi
+
+## 🔗 İlişkisel Model
+
+Temel ilişkiler aşağıdaki iş modelini destekler:
 
 ```text
-sql-server-labs/
+org.Departments
+       │
+       └──< org.Employees
+                    │
+                    ├──< kzn.KaizenTeamMembers >── kzn.Kaizens
+                    │                                  │
+                    │                                  ├── kzn.KaizenAnalyses
+                    │                                  ├──< kzn.KaizenActionPlans
+                    │                                  ├── kzn.KaizenResults
+                    │                                  └──< audit.KaizenLogs
+                    │
+                    └── Kaizen aksiyonları için sorumluluk ilişkileri
+```
+
+> **Not:** Diyagram kavramsal ilişki yapısını gösterir. Kesin cardinality ve foreign key ilişkileri için SQL şema scriptleri esas alınmalıdır.
+
+## 🚀 SQL Server Nesneleri
+
+Proje, SQL Server'ın farklı veritabanı nesnelerini ve yönetim mekanizmalarını incelemek için uygun bir altyapı sunar.
+
+| Nesne | Kullanım amacı |
+|---|---|
+| **Tables** | Organizasyon, Kaizen ve denetim verilerini saklamak |
+| **Views** | Departman ve proje bazlı raporlama yapmak |
+| **Functions** | Hesaplamaları ve tekrar kullanılabilir sorgu mantığını uygulamak |
+| **Stored Procedures** | Kontrollü veri ekleme ve güncelleme işlemlerini yürütmek |
+| **Triggers** | Belirli veri değişikliklerini denetim kayıtlarına aktarmak |
+| **Indexes** | Sorgu performansını iyileştirmek |
+| **Constraints** | Veri bütünlüğünü korumak |
+| **Transactions** | Birden fazla işlemin tutarlı biçimde yürütülmesini sağlamak |
+
+### Stored Procedures
+
+Stored procedure örneklerinde aşağıdaki konular ele alınabilir:
+
+- `BEGIN TRY...CATCH` ile hata yönetimi
+- `BEGIN TRANSACTION`, `COMMIT` ve `ROLLBACK`
+- Parametre doğrulama
+- Durum geçişlerinin kontrol edilmesi
+- Veri bütünlüğünün korunması
+
+### Triggers ve Audit
+
+Kaizen kayıtlarındaki belirli değişikliklerin `audit.KaizenLogs` tablosuna aktarılması için trigger yaklaşımı kullanılabilir.
+
+Trigger tasarımında çok satırlı `INSERT` ve `UPDATE` işlemleri dikkate alınmalıdır.
+
+### SQL Server Agent
+
+SQL Server Agent destekleyen bir ortamda aşağıdaki işler zamanlanabilir:
+
+- Vadesi geçmiş aksiyonların kontrol edilmesi
+- Periyodik bakım görevleri
+- İndeks ve istatistik bakımının değerlendirilmesi
+
+> SQL Server Agent görevlerinin kullanılabilirliği, SQL Server sürümüne ve çalıştırılan ortama bağlıdır. Docker tabanlı SQL Server kurulumunda ilgili özelliklerin desteklendiği ayrıca doğrulanmalıdır.
+
+## 📁 Proje Yapısı
+
+```text
+kaizen/
 ├── docker/
 │   └── docker-compose.yml
 ├── scripts/
@@ -51,107 +177,178 @@ sql-server-labs/
 │   └── 03_dummy_data.sql
 └── README.md
 ```
-Not: Yukarıdaki dizin yapısı temel proje düzenini gösterir. Gerçek repository yapınızla dosya ve klasör adlarının eşleştiğinden emin olun.
 
-Script Açıklamaları
-Dosya	Açıklama
-01_schema.sql	Kaizen_DB veritabanını, şemaları, tabloları, ilişkileri, kısıtları ve ilgili veritabanı nesnelerini oluşturur.
-02_master_data.sql	Departmanlar ve diğer zorunlu referans verileri gibi temel kayıtları ekler.
-03_dummy_data.sql	Çalışanlar, Kaizen projeleri, kök neden analizleri, aksiyon planları ve kazanım ölçümleri için örnek veriler oluşturur.
+### Script Açıklamaları
 
+| Dosya | Açıklama |
+|---|---|
+| `01_schema.sql` | Veritabanı şemalarını, tabloları, ilişkileri, kısıtları ve tanımlanan diğer veritabanı nesnelerini oluşturur. |
+| `02_master_data.sql` | Departmanlar ve diğer referans verileri gibi temel kayıtları ekler. |
+| `03_dummy_data.sql` | Çalışanlar, Kaizen projeleri, analizler, aksiyon planları ve sonuçlar için örnek veriler ekler. |
 
-⚙️ Gereksinimler
-Projeyi çalıştırmadan önce aşağıdaki araçların sisteminizde kurulu olduğundan emin olun:
-- Docker
+## ⚙️ Gereksinimler
+
+Projeyi çalıştırmak için aşağıdaki araçlar gereklidir:
+
+- [Docker](https://www.docker.com/)
 - Docker Compose
 - Git
 - Terminal veya komut satırı erişimi
-Proje, Microsoft SQL Server 2022 üzerinde çalışacak şekilde tasarlanmıştır.
-🎯 Kurulum ve Çalıştırma
-1. Repository'yi Klonlayın
-git clone https://github.com/ufukgulec/sql-server-labs.git
-cd sql-server-labs
 
-2. SQL Server Container'ını Başlatın
-Docker Compose yapılandırmasının bulunduğu klasöre geçin ve container'ı arka planda başlatın:
+Veritabanı ortamı Microsoft SQL Server 2022 için tasarlanmıştır.
+
+## 🛠️ Kurulum
+
+### 1. Repository'yi Klonlayın
+
+```bash
+git clone https://github.com/ufukgulec/sql-server-labs.git
+cd sql-server-labs/kaizen
+```
+
+### 2. SQL Server Container'ını Başlatın
+
+Docker Compose yapılandırmasının bulunduğu dizine geçin:
+
+```bash
 cd docker
 docker compose up --build -d
+```
 
 Container durumunu kontrol edin:
+
+```bash
 docker compose ps
+```
 
-Container loglarını görüntüleyin:
+Logları görüntüleyin:
+
+```bash
 docker logs kaizen_sql_server
+```
 
-SQL Server'ın tamamen başlatıldığından ve bağlantı kabul edebildiğinden emin olun.
-3. Veritabanı Şemasını Oluşturun
-SQL Server hazır olduktan sonra Kaizen_DB veritabanını ve ilgili şemaları oluşturmak için aşağıdaki komutu çalıştırın:
+SQL Server'ın başlatıldığını ve sorgu kabul edebildiğini doğrulayın.
+
+### 3. Veritabanı Şemasını Oluşturun
+
+`docker` dizininden aşağıdaki komutla şema scriptini çalıştırabilirsiniz:
+
+```bash
 docker exec -i kaizen_sql_server \
   /opt/mssql-tools18/bin/sqlcmd \
   -S localhost \
   -U sa \
-  -P "Password123" \
+  -P "$SA_PASSWORD" \
   -C \
   -I \
   < ../scripts/01_schema.sql
+```
 
-Parametreler:
-- -S localhost: SQL Server bağlantı adresi.
-- -U sa: SQL Server yönetici hesabı.
-- -P: Bağlantı parolası.
-- -C: Sunucu sertifikasına güvenilmesini sağlar.
-- -I: QUOTED_IDENTIFIER davranışını etkinleştirir.
-- -i veya standart girdi yönlendirmesi: SQL scriptinin çalıştırılmasını sağlar.
-Güvenlik uyarısı: Password123 yalnızca örnek bir paroladır. Gerçek ortamlarda güçlü parola kullanın ve parolaları repository içerisinde saklamayın. Yerel geliştirme ortamında da mümkün olduğunca environment variable veya uygun bir secret mekanizması tercih edin.
+Bu örnekte `SA_PASSWORD` değişkeninin terminal ortamında tanımlanmış olması gerekir.
 
-4. Master Verilerini Yükleyin
-Departmanlar ve diğer temel referans verilerini oluşturmak için:
+Örneğin:
+
+```bash
+export SA_PASSWORD='YourStrongPassword'
+```
+
+> **Güvenlik:** Gerçek parolaları Git repository'sine eklemeyin. Örnek parolaları kendi Docker Compose yapılandırmanızdaki ayarlarla eşleştirin.
+
+**Parametreler:**
+
+| Parametre | Açıklama |
+|---|---|
+| `-S localhost` | Bağlantı adresini belirtir. |
+| `-U sa` | SQL Server kullanıcı adını belirtir. |
+| `-P` | Bağlantı parolasını belirtir. |
+| `-C` | Sunucu sertifikasına güvenilmesini sağlar. |
+| `-I` | `QUOTED_IDENTIFIER` davranışını etkinleştirir. |
+
+### 4. Master Verilerini Yükleyin
+
+```bash
 docker exec -i kaizen_sql_server \
   /opt/mssql-tools18/bin/sqlcmd \
   -S localhost \
   -U sa \
-  -P "Password123" \
+  -P "$SA_PASSWORD" \
   -C \
   < ../scripts/02_master_data.sql
+```
 
-5. Örnek (Dummy) Verileri Yükleyin
-Gelişmiş test senaryolarını simüle etmek için:
+### 5. Örnek Verileri Yükleyin
+
+```bash
 docker exec -i kaizen_sql_server \
   /opt/mssql-tools18/bin/sqlcmd \
   -S localhost \
   -U sa \
-  -P "Password123" \
+  -P "$SA_PASSWORD" \
   -C \
   < ../scripts/03_dummy_data.sql
+```
 
-Bu adımların ardından veritabanı; ilişkisel tabloları, kısıtları ve örnek verileriyle birlikte kullanıma hazır olacaktır.
-Önemli: Scriptlerin hangi veritabanında çalıştığını doğrulayın. Gerekirse bağlantı komutlarına -d Kaizen_DB parametresini ekleyin. Kurulum scriptleri bu veritabanını oluşturuyorsa ilk şema scriptinde bu parametreyi kullanmadan önce bağlantı hedefini kontrol edin.
+> **Önemli:** Scriptlerin doğru veritabanında çalıştığını doğrulayın. `01_schema.sql` veritabanını oluşturuyor ve sonraki scriptler bu veritabanını hedefliyorsa bağlantı hedefini veya scriptlerdeki `USE Kaizen_DB` ifadelerini kontrol edin. Gerekli durumlarda `sqlcmd` komutuna `-d Kaizen_DB` parametresi eklenebilir.
 
-🩺 Docker Sağlık Kontrolü
-Docker yapılandırmasında SQL Server container'ının yalnızca çalışıyor olmasını değil, veritabanı motorunun sorgu kabul edebilir durumda olmasını da doğrulayan sqlcmd tabanlı bir HEALTHCHECK mekanizması kullanılabilir.
-Bu yaklaşım, container'ın başlatılması ile veritabanının gerçekten hazır olması arasındaki farkı gözetir.
-📊 Performans ve İndeksleme Çalışmaları
-Veritabanı şeması, aşağıdaki konularda uygulamalı deneyler yapılmasına uygun bir zemin sunar:
-- Execution Plan analizi
-- Clustered ve nonclustered index stratejileri
+## 🩺 Docker Health Check
+
+Docker yapılandırmasında `sqlcmd` tabanlı bir `HEALTHCHECK` kullanılarak SQL Server'ın sorgu kabul edebilir durumda olup olmadığı kontrol edilebilir.
+
+Bu kontrol, container'ın çalışıyor olması ile veritabanı motorunun hazır olması arasındaki farkı gözetir.
+
+## 📊 Performans ve DBA Laboratuvarları
+
+Bu veritabanı, aşağıdaki konularda uygulamalı çalışmalar yapmak için kullanılabilir.
+
+### Query Optimization
+
+- Actual Execution Plan analizi
+- Logical reads ve CPU süresinin ölçülmesi
+- Sorgu maliyetlerinin karşılaştırılması
+- Filtreleme ve sıralama stratejileri
+
+### Indexing
+
+- Clustered ve nonclustered index'ler
+- Composite index tasarımı
 - Filtered index kullanımı
-- Sorgu optimizasyonu
-- Logical reads ve CPU süresi ölçümü
+- İndekslerin sorgu planına etkisi
+
+### Transaction ve Concurrency
+
 - Transaction yönetimi
-- Eş zamanlı veri güncellemeleri
-- ROWVERSION ile optimistic concurrency
-- İndeks ve istatistik bakımı
-Bu çalışmalarda amaç yalnızca indeks oluşturmak değil, sorguların davranışını ölçmek ve optimizasyon kararlarını gerçek sonuçlarla desteklemektir.
-🧪 Gelecek Geliştirmeler
-Proje zaman içerisinde aşağıdaki laboratuvarlarla genişletilebilir:
-- [ ] Otomatik SQL testleri ve veri bütünlüğü kontrolleri
+- `TRY...CATCH` ile hata yönetimi
+- `ROWVERSION` ile optimistic concurrency
+- Blocking ve deadlock senaryoları
+
+### Database Maintenance
+
+- İstatistiklerin güncellenmesi
+- İndeks bakım stratejileri
+- Veritabanı bütünlüğü kontrolleri
+- Backup ve restore uygulamaları
+- Query Store ile performans izleme
+
+Optimizasyon çalışmalarında amaç yalnızca indeks eklemek değil, sorgu davranışını ölçerek kararları somut sonuçlarla desteklemektir.
+
+## 🧪 Gelecek Geliştirmeler
+
+- [ ] Otomatik SQL testleri
 - [ ] tSQLt ile veritabanı birim testleri
-- [ ] Query Performance ve Execution Plan laboratuvarı
+- [ ] Şema ve veri bütünlüğü doğrulamaları
+- [ ] Query Performance laboratuvarı
 - [ ] Transaction, blocking ve deadlock senaryoları
-- [ ] Backup ve restore uygulamaları
-- [ ] Query Store ile performans izleme
-- [ ] GitHub Actions ile otomatik SQL doğrulama
+- [ ] Backup ve restore testleri
+- [ ] Query Store ile performans analizi
+- [ ] GitHub Actions ile otomatik doğrulama
 - [ ] Büyük veri kümeleriyle performans testleri
-🎯 Projenin Amacı
-Bu proje, Microsoft SQL Server üzerinde ilişkisel veritabanı tasarımı, T-SQL geliştirme, performans optimizasyonu ve DBA uygulamalarını gerçekçi bir iş alanı üzerinden deneyimlemek amacıyla geliştirilmiştir.
-Temel hedef: SQL Server özelliklerini yalnızca teorik olarak açıklamak yerine, çalıştırılabilir scriptler, ölçülebilir sonuçlar ve tekrarlanabilir deneylerle ortaya koymak.
+
+## 🎯 Projenin Amacı
+
+Bu proje, Microsoft SQL Server üzerinde ilişkisel veritabanı tasarımı, T-SQL geliştirme, performans optimizasyonu ve DBA uygulamalarını gerçekçi bir iş alanı üzerinden deneyimlemek amacıyla hazırlanmıştır.
+
+**Temel hedef:** SQL Server özelliklerini yalnızca teorik olarak açıklamak yerine, çalıştırılabilir scriptler, ölçülebilir sonuçlar ve tekrarlanabilir deneylerle ortaya koymak.
+
+---
+
+**Repository:** [ufukgulec/sql-server-labs](https://github.com/ufukgulec/sql-server-labs)
