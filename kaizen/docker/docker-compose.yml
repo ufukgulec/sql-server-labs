@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    # Kullanılacak resmi Microsoft SQL Server 2022 Linux imajı
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    
+    # Docker daemon üzerinde görünecek benzersiz container adı
+    container_name: kaizen_sql_server
+    
+    # Sunucu veya Docker servisi yeniden başlatıldığında container'ın otomatik ayağa kalkmasını sağlar
+    restart: unless-stopped
+    
+    environment:
+      # Microsoft EULA (Son Kullanıcı Lisans Anlaşması) şartlarının kabul edildiğini belirtir (Zorunlu)
+      - ACCEPT_EULA=Y
+      
+      # MSSQL 'sa' (system administrator) hesabı için güçlü şifre (En az 8 karakter; büyük/küçük harf, rakam ve sembol içermelidir)
+      - MSSQL_SA_PASSWORD=Password123
+      
+      # Veritabanı lisans katmanı: Geliştirme ve test ortamları için ücretsiz ve tam özellikli 'Developer' sürümü
+      - MSSQL_PID=Developer
+      
+    ports:
+      # Host makinenin 1433 portunu container içerisindeki 1433 portuna yönlendirir (Dışarıdan erişim için)
+      - "1433:1433"
+      
+    volumes:
+      # Veri Kalıcılığı (Data Persistence): Diğer projelerle çakışmaması için kaizen_mssql_data olarak izole edildi
+      - kaizen_mssql_data:/var/opt/mssql
+      
+      # Proje Mimarisi Notu: docker/ klasöründen çalıştırıldığı için, bir üst dizindeki scripts/ 
+      # klasörünü container içine salt okunur (ro) olarak bağlar ve Kaizen SQL scriptlerine erişim sağlar.
+      - ../scripts:/usr/work/scripts:ro
+      
+    # Container'ın sadece "çalışıyor" olmasını değil, aynı zamanda veritabanı 
+    # motorunun sorgu alabilecek kadar ayağa kalkıp kalkmadığını denetleyen sağlık kontrolü mekanizması.
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Password123", "-C", "-Q", "SELECT 1" ]
+      interval: 10s   # Her 10 saniyede bir sağlık durumunu test et
+      timeout: 5s     # Komut 5 saniye içinde yanıt vermezse başarısız say
+      retries: 5      # Üst üste 5 başarısız denemede container durumunu 'unhealthy' olarak işaretle
+      start_period: 15s # İlk açılışta veritabanı servisinin kendine gelmesi için tanınan süre
+
+volumes:
+  # Kaizen projesine özel Docker yönetimli kalıcı veri alanı (Named Volume) tanımı
+  kaizen_mssql_data:
+    driver: local
